@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/frankh/crypto/ed25519"
+	"github.com/svaishnavy/crypto/ed25519"
 )
 
 type BlockHash string

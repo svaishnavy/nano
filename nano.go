@@ -3,8 +3,8 @@ package main
 import (
 	"time"
 
-	"github.com/frankh/nano/node"
-	"github.com/frankh/nano/store"
+	"github.com/svaishnavy/nano/node"
+	"github.com/svaishnavy/nano/store"
 )
 
 func main() {

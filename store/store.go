@@ -8,10 +8,10 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger"
-	"github.com/frankh/nano/address"
-	"github.com/frankh/nano/blocks"
-	"github.com/frankh/nano/types"
-	"github.com/frankh/nano/uint128"
+	"github.com/svaishnavy/nano/address"
+	"github.com/svaishnavy/nano/blocks"
+	"github.com/svaishnavy/nano/types"
+	"github.com/svaishnavy/nano/uint128"
 )
 
 type Config struct {

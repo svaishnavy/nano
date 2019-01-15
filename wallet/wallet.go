@@ -3,12 +3,12 @@ package wallet
 import (
 	"encoding/hex"
 
-	"github.com/frankh/crypto/ed25519"
-	"github.com/frankh/nano/address"
-	"github.com/frankh/nano/blocks"
-	"github.com/frankh/nano/store"
-	"github.com/frankh/nano/types"
-	"github.com/frankh/nano/uint128"
+	"github.com/svaishnavy/crypto/ed25519"
+	"github.com/svaishnavy/nano/address"
+	"github.com/svaishnavy/nano/blocks"
+	"github.com/svaishnavy/nano/store"
+	"github.com/svaishnavy/nano/types"
+	"github.com/svaishnavy/nano/uint128"
 	"github.com/pkg/errors"
 )
 
