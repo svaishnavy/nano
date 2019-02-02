@@ -14,9 +14,9 @@ import (
 
 var MagicNumber = [2]byte{'R', 'C'}
 
-const VersionMax = 0x05
-const VersionUsing = 0x05
-const VersionMin = 0x04
+const VersionMax = byte(0x0f)
+const VersionUsing = byte(0x0f)
+const VersionMin = byte(0x0d)
 
 // Non-idiomatic constant names to keep consistent with reference implentation
 const (
@@ -87,6 +87,9 @@ func CreateKeepAlive(peers []Peer) *MessageKeepAlive {
 	m.MessageHeader.VersionUsing = VersionUsing
 	m.MessageHeader.VersionMin = VersionMin
 	m.MessageHeader.MessageType = Message_keepalive
+	m.MessageHeader.Extensions = 0x0
+	m.MessageHeader.BlockType = 0x0
+	m.Peers = peers
 	return &m
 }
 
@@ -210,6 +213,8 @@ func (m *MessageKeepAlive) Write(buf *bytes.Buffer) error {
 			return err
 		}
 	}
+	remaining := 152 - buf.Len()
+	buf.Write(make([]byte, remaining))
 
 	return nil
 }
@@ -319,7 +324,6 @@ func (m *MessageHeader) WriteHeader(buf *bytes.Buffer) error {
 		buf.WriteByte(m.Extensions),
 		buf.WriteByte(m.BlockType),
 	)
-
 	for _, err := range errs {
 		if err != nil {
 			return err

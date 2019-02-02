@@ -2,6 +2,7 @@ package node
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"math/rand"
 	"net"
@@ -11,8 +12,11 @@ import (
 const packetSize = 512
 const numberOfPeersToShare = 8
 
+var conn *net.UDPConn
+
 var DefaultPeer = Peer{
-	net.ParseIP("::ffff:192.168.0.70"),
+	//net.ParseIP("::ffff:192.168.0.70"),
+	net.ParseIP("::ffff:94.130.105.241"),
 	7075,
 	nil,
 }
@@ -24,36 +28,37 @@ func (p *Peer) SendMessage(m Message) error {
 	now := time.Now()
 	p.LastReachout = &now
 
-	outConn, err := net.DialUDP("udp", nil, p.Addr())
-	if err != nil {
-		return err
-	}
-
 	buf := bytes.NewBuffer(nil)
-	err = m.Write(buf)
+	err := m.Write(buf)
 	if err != nil {
 		return err
 	}
-	outConn.Write(buf.Bytes())
+	_, err = conn.WriteToUDP(buf.Bytes(), &net.UDPAddr{Port: int(p.Port), IP: p.IP})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func ListenForUdp() {
+func ListenForUdp() error {
 	log.Printf("Listening for udp packets on 7075")
-	ln, err := net.ListenPacket("udp", ":7075")
+	var err error
+	conn, err = net.ListenUDP("udp", &net.UDPAddr{Port: 7075})
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	buf := make([]byte, packetSize)
 
 	for {
-		n, _, err := ln.ReadFrom(buf)
+		n, _, err := conn.ReadFromUDP(buf)
 		if err != nil {
+			log.Printf("Error: UDP read error: %v", err)
 			continue
 		}
 		if n > 0 {
+			log.Println("Received message")
 			handleMessage(bytes.NewBuffer(buf[:n]))
 		}
 	}
@@ -67,9 +72,11 @@ func SendKeepAlive(peer Peer) error {
 			break
 		}
 		randomPeers = append(randomPeers, PeerList[i])
+		fmt.Println(PeerList[i].IP, []byte(PeerList[i].IP))
 	}
 
 	m := CreateKeepAlive(randomPeers)
+	log.Println("Sending keepalive")
 	return peer.SendMessage(m)
 }
 
@@ -79,7 +86,10 @@ func SendKeepAlives(params []interface{}) {
 
 	for _, peer := range peers {
 		if peer.LastReachout == nil || peer.LastReachout.Before(timeCutoff) {
-			SendKeepAlive(peer)
+			err := SendKeepAlive(peer)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 }
