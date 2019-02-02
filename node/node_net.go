@@ -2,15 +2,36 @@ package node
 
 import (
 	"bytes"
+	"crypto"
 	"fmt"
 	"log"
 	"math/rand"
 	"net"
 	"time"
+
+	"github.com/svaishnavy/nano/address"
+	"github.com/svaishnavy/nano/types"
 )
 
 const packetSize = 512
 const numberOfPeersToShare = 8
+
+type Node struct {
+	privK   crypto.PrivateKey
+	pubK    crypto.PublicKey
+	account types.Account
+}
+
+func NewNode() *Node {
+	pubK, privK := address.GenerateKey()
+	account := address.PubKeyToAddress(pubK)
+	node := &Node{
+		privK:   privK,
+		pubK:    pubK,
+		account: account,
+	}
+	return node
+}
 
 var conn *net.UDPConn
 
@@ -21,7 +42,13 @@ var DefaultPeer = Peer{
 	nil,
 }
 
-var PeerList = []Peer{DefaultPeer}
+var LocalPeer = Peer{
+	net.ParseIP("::ffff:77.171.82.118"),
+	7075,
+	nil,
+}
+
+var PeerList = []Peer{DefaultPeer, LocalPeer}
 var PeerSet = map[string]bool{DefaultPeer.String(): true}
 
 func (p *Peer) SendMessage(m Message) error {
@@ -41,7 +68,7 @@ func (p *Peer) SendMessage(m Message) error {
 	return nil
 }
 
-func ListenForUdp() error {
+func (node *Node) ListenForUdp() error {
 	log.Printf("Listening for udp packets on 7075")
 	var err error
 	conn, err = net.ListenUDP("udp", &net.UDPAddr{Port: 7075})
@@ -81,10 +108,9 @@ func SendKeepAlive(peer Peer) error {
 }
 
 func SendKeepAlives(params []interface{}) {
-	peers := params[0].([]Peer)
 	timeCutoff := time.Now().Add(-5 * time.Minute)
 
-	for _, peer := range peers {
+	for _, peer := range PeerList {
 		if peer.LastReachout == nil || peer.LastReachout.Before(timeCutoff) {
 			err := SendKeepAlive(peer)
 			if err != nil {

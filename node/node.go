@@ -29,6 +29,9 @@ const (
 	Message_bulk_pull
 	Message_bulk_push
 	Message_frontier_req
+	Message_bulk_pull_blocks
+	Message_node_id_handshake
+	Message_bulk_pull_account
 )
 
 const (
@@ -74,6 +77,17 @@ type MessageConfirmReq struct {
 type MessagePublish struct {
 	MessageHeader
 	MessageBlock
+}
+
+type NodeIdResponse struct {
+	Account   [32]byte
+	Signature [64]byte
+}
+
+type MessageNodeIdHandshake struct {
+	MessageHeader
+	NodeIdQuery [32]byte
+	NodeIdResponse
 }
 
 type Message interface {
@@ -137,6 +151,12 @@ func handleMessage(buf *bytes.Buffer) {
 			log.Printf("Failed to read confirm: %s", err)
 		} else {
 			store.StoreBlock(m.ToBlock())
+		}
+	case Message_node_id_handshake:
+		var m MessageNodeIdHandshake
+		err := m.Read(buf)
+		if err != nil {
+			log.Printf("Failed to read node id handshake: %s", err)
 		}
 	default:
 		log.Printf("Ignored message. Cannot handle message type %d\n", header.MessageType)
@@ -309,6 +329,22 @@ func (m *MessagePublish) Write(buf *bytes.Buffer) error {
 		return err
 	}
 
+	return nil
+}
+
+func (m *MessageNodeIdHandshake) Read(buf *bytes.Buffer) error {
+	err := m.MessageHeader.ReadHeader(buf)
+	if err != nil {
+		return err
+	}
+	log.Println("Node Id Handshake flags:  ", m.MessageHeader.Extensions, m.MessageHeader.BlockType)
+	if m.MessageHeader.Extensions&0x01 != 0 {
+		// NodeIdQuery
+
+	}
+	if m.MessageHeader.Extensions&0x02 != 0 {
+		// NodeIdResponse
+	}
 	return nil
 }
 
